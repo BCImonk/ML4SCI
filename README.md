@@ -308,36 +308,74 @@ This contrasts with simpler approaches that often use raw channel data with a si
 ---
 ### Implementation Architecture
 
-My implementation follows a structured pipeline:
+```
+┌───────────────────────────────────────────┐
+│ Data Loading & Preprocessing (n=40)       │
+│ - 2 classes (20 samples each)             │
+│ - EEG frequency bands (alpha,beta,etc.)   │
+└────────────────────┬──────────────────────┘
+                     ▼
+┌───────────────────────────────────────────┐
+│ Feature Engineering                       │
+│ - Electrode grouping by brain region      │
+│ - Regional statistics (mean,std,max,min)  │
+│ - 100 derived topological features        │
+└────────────────────┬──────────────────────┘
+                     ▼
+┌───────────────────────────────────────────┐
+│ Data Standardization                      │
+│ - StandardScaler applied                  │
+└─────────┬─────────────┬─────────┬─────────┘
+          ▼             ▼         ▼
+┌─────────────────┐ ┌─────────┐ ┌─────────┐
+│ UFS             │ │ RFE     │ │ PCA     │
+│ mutual_info_    │ │ Random  │ │ 5 compo-│
+│ classif         │ │ Forest  │ │ nents   │
+└────────┬────────┘ └────┬────┘ └────┬────┘
+         ▼              ▼           ▼
+┌─────────────────┐ ┌─────────┐ ┌─────────┐
+│ UFS Top 5:      │ │ RFE Top │ │ PCA Top │
+│ delta44,delta45,│ │ 5:      │ │ 5:      │
+│ gamma36,gamma43,│ │ beta23, │ │ delta_  │
+│ delta_temporal_ │ │ delta43,│ │ occip_  │
+│ min             │ │ delta47,│ │ max,    │
+│                 │ │ delta_  │ │ delta_  │
+│                 │ │ temporal│ │ occip_  │
+│                 │ │ _std,   │ │ std,    │
+│                 │ │ delta_  │ │ delta27,│
+│                 │ │ temporal│ │ alpha_  │
+│                 │ │ _min    │ │ central_│
+│                 │ │         │ │ mean,   │
+│                 │ │         │ │ alpha18 │
+└────────┬────────┘ └────┬────┘ └────┬────┘
+         ▼              ▼           ▼
+┌───────────────────────────────────────────┐
+│ 5-Fold Cross-Validation                   │
+│ With Multiple Classifiers:                │
+│ - GradientBoostingClassifier             │
+│ - RandomForestClassifier                 │
+│ - SVM (SVC)                              │
+└────────────────────┬──────────────────────┘
+                     ▼
+┌───────────────────────────────────────────┐
+│ Performance Evaluation                    │
+│ UFS (GradientBoost): 0.7500              │
+│ RFE (RandomForest):  0.6250              │
+│ PCA (GradientBoost): 0.3500              │
+└────────────────────┬──────────────────────┘
+                     ▼
+┌───────────────────────────────────────────┐
+│ Results Analysis & Visualization          │
+│ - Performance comparison                  │
+│ - Feature importance visualization        │
+│ - Common feature identification           │
+│   (delta_temporal_min in UFS and RFE)     │
+└───────────────────────────────────────────┘
 
-1. **Data Preprocessing**:
-   - Load EEG data and separate features from target labels
-   - Group electrodes by brain region
-   - Extract frequency band information
-
-2. **Feature Engineering**:
-   - Generate regional statistics for each frequency band
-   - Combine original features with derived features
-   - Standardize all features
-
-3. **Parallel Feature Selection**:
-   - UFS: Evaluate each feature independently using mutual information
-   - RFE: Iteratively eliminate features using RandomForest importance
-   - PCA: Transform data and identify influential original features
-
-4. **Model Evaluation**:
-   - Train and evaluate three classifier types on each feature subset
-   - Use stratified 5-fold cross-validation for reliable performance estimates
-   - Identify best-performing feature selection and classifier combination
-
-5. **Results Analysis**:
-   - Compare performance across methods
-   - Analyze feature importance for each method
-   - Identify common features across selection techniques
-
-This architecture allows for comprehensive evaluation and comparison while maintaining neuroanatomical context.
+```
 
 ---
+
 ### Technologies Used
 
 
