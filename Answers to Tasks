@@ -1,1 +1,30 @@
+Q1 (Task 1): Suggest reasoning as to why one of the Algorithms (KNN,SVM, Linear Regression) is performing better and why?
+A:
+SVM Outperforms Other Algorithms in This EEG Classification Task.
+Looking at both implementations, I found that SVM clearly outshines KNN and Linear Regression. Here's my take on why:
+SVM works so well here because EEG data is inherently complex and high-dimensional. Even with only 40 samples, SVM's ability to maximize the margin between classes gives it better generalization power than the competitors. The results speak for themselves - SVM with RFE preprocessing reached 70% accuracy on original data and nearly 98% with augmentation.
+What makes SVM particularly suited for this task? I believe it's the perfect match between SVM's strengths and EEG data characteristics:
+1. EEG data has many features but few samples - SVM handles this ratio well
+2. Brain activity patterns are non-linear - SVM's kernel flexibility captures these relationships
+3. The class boundary between metabolic states is likely complex - SVM excels at finding optimal boundaries
 
+Linear Regression performed poorly (only 12.5% accuracy in the basic approach) because it's simply the wrong tool for the job. It can't capture the non-linear patterns in brain activity and wasn't designed for classification tasks.
+KNN showed promise with augmented data (92.86%) but fell apart with the original small dataset (32.50%). This makes sense to me - KNN needs densely populated feature spaces to work well, and our original dataset was just too sparse.
+The dramatic improvement in the advanced implementation came from smart feature engineering that incorporated neurophysiological knowledge. By creating features based on brain regions and frequency relationships, then letting RFE select the most discriminative ones, we gave SVM exactly what it needed to shine.
+
+-----------------------------------------------------------------------------------------------------------------------------
+
+Q2 (Task 2): Give a quick explanation for why (or why not) the features are the same across feature selection algorithms.
+A:
+In my Implementation, the algorithms mostly chose different features but this is mainly because they're looking for things:
+
+UFS is like a solo talent scout - it picks features that look good on their own.
+RFE is more like a team coach - it considers how features work together. 
+PCA doesn't care about classification at all - it just finds patterns in the data.
+
+With EEG data, there's also a lot of redundancy. Multiple channels capture similar information, so algorithms can pick different representatives that are essentially telling the same story.
+The small sample size (just 40 participants) makes everything less stable too. It's like trying to predict election results from a tiny polling sample - slight changes in methodology can give different outcomes.
+
+What's interesting is that despite these differences, you can still see patterns:
+1.Delta frequency features show up repeatedly across methods
+2.Temporal and occipital brain regions seem particularly important
